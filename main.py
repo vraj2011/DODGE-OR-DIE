@@ -6,8 +6,13 @@ pygame.display.set_caption("DODGE OR DIE")
 screen = pygame.display.set_mode((480, 640))
 clock = pygame.time.Clock()
 font = pygame.font.SysFont(None, 36)
+ship = pygame.image.load("assets/ship.png").convert_alpha()
+ship = pygame.transform.scale(ship, (50, 38))
 
-player = pygame.Rect(220, 580, 40, 40)
+rock = pygame.image.load("assets/rock.png").convert_alpha()
+rock = pygame.transform.scale(rock, (40, 40))
+
+player = pygame.Rect(215, 580, 50, 38)
 blocks = []
 score = 0
 
@@ -24,10 +29,10 @@ while running:
     player.x -= 6
   if keys[pygame.K_RIGHT]:
     player.x += 6
-  player.x = max(0, min(440, player.x))
+  player.x = max(0, min(430, player.x))
 
   if random.random() < 0.03:
-    blocks.append(pygame.Rect(random.randint(0, 450), -30, 30, 30))
+    blocks.append(pygame.Rect(random.randint(0, 440), -40, 40, 40))
 
   for b in blocks:
     b.y += 5
@@ -38,9 +43,9 @@ while running:
   score += 1
 
   screen.fill((20, 20, 30))
-  pygame.draw.rect(screen, (80, 200, 120), player)
+  screen.blit(ship, player)
   for b in blocks:
-    pygame.draw.rect(screen, (220, 80, 80), b)
+    screen.blit(rock, b)
   text = font.render(str(score // 60), True, (255, 255, 255))
   screen.blit(text, (10, 10))
   pygame.display.flip()
