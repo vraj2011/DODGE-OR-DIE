@@ -3,7 +3,9 @@ import random
 
 pygame.init()
 pygame.display.set_caption("DODGE OR DIE")
-screen = pygame.display.set_mode((480, 640))
+WIDTH = 960
+HEIGHT = 720
+screen = pygame.display.set_mode((WIDTH , HEIGHT))
 clock = pygame.time.Clock()
 font = pygame.font.SysFont(None, 36)
 ship = pygame.image.load("assets/ship.png").convert_alpha()
@@ -15,7 +17,7 @@ shoot = pygame.mixer.Sound("assets/shoot.ogg")
 laser = pygame.image.load("assets/laser.png").convert_alpha()
 laser = pygame.transform.scale(laser, (10, 30))
 
-player = pygame.Rect(215, 580, 50, 38)
+player = pygame.Rect(WIDTH // 2 - 25, HEIGHT - 80, 50, 38)
 blocks = []
 score = 0
 bullets = []
@@ -34,7 +36,7 @@ while running:
     player.x -= 6
   if keys[pygame.K_RIGHT]:
     player.x += 6
-  player.x = max(0, min(430, player.x))
+  player.x = max(0, min(WIDTH - 50, player.x))
   
   cooldown -= 1
   if keys[pygame.K_SPACE] and cooldown <= 0:
@@ -42,10 +44,8 @@ while running:
     shoot.play()
     cooldown = 15
   
-
-  if random.random() < 0.03:
-    blocks.append(pygame.Rect(random.randint(0, 440), -40, 40, 40))
-
+  if random.random() < 0.05:
+    blocks.append(pygame.Rect(random.randint(0, WIDTH - 40), -40, 40, 40))
   for b in blocks:
     b.y += 5
     if b.colliderect(player):
@@ -60,7 +60,7 @@ while running:
         score += 120
         break
 
-  blocks = [b for b in blocks if b.y < 640]
+  blocks = [b for b in blocks if b.y < HEIGHT]
   bullets = [bl for bl in bullets if bl.y > -20]
   score += 1
 
