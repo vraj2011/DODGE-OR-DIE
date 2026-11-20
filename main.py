@@ -7,13 +7,15 @@ WIDTH = 960
 HEIGHT = 720
 screen = pygame.display.set_mode((WIDTH , HEIGHT))
 clock = pygame.time.Clock()
-font = pygame.font.SysFont(None, 36)
+font = pygame.font.Font("assets/font.ttf", 24)
+big = pygame.font.Font("assets/font.ttf", 56)
 ship = pygame.image.load("assets/ship.png").convert_alpha()
 ship = pygame.transform.scale(ship, (50, 38))
 
 rock = pygame.image.load("assets/rock.png").convert_alpha()
 rock = pygame.transform.scale(rock, (40, 40))
 shoot = pygame.mixer.Sound("assets/shoot.ogg")
+lose = pygame.mixer.Sound("assets/lose.ogg")
 laser = pygame.image.load("assets/laser.png").convert_alpha()
 laser = pygame.transform.scale(laser, (10, 30))
 
@@ -22,6 +24,7 @@ blocks = []
 score = 0
 bullets = []
 cooldown = 0
+dead = False
 
 running = True
 while running:
@@ -30,6 +33,21 @@ while running:
   for event in pygame.event.get():
     if event.type == pygame.QUIT:
       running = False
+
+  if dead:
+    screen.fill((20, 20, 30))
+    t1 = big.render("GAME OVER", False, (220, 80, 80))
+    t2 = font.render("Score: " + str(score // 60) + "   Press R to restart", False, (255, 255, 255))
+    screen.blit(t1, (WIDTH // 2 - t1.get_width() // 2, 250))
+    screen.blit(t2, (WIDTH // 2 - t2.get_width() // 2, 340))
+    pygame.display.flip()
+    if pygame.key.get_pressed()[pygame.K_r]:
+      blocks = []
+      bullets = []
+      score = 0
+      player.x = WIDTH // 2 - 25
+      dead = False
+    continue
 
   keys = pygame.key.get_pressed()
   if keys[pygame.K_LEFT]:
@@ -49,12 +67,14 @@ while running:
   for b in blocks:
     b.y += 5
     if b.colliderect(player):
-      running = False
+      dead = True
+      lose.play()
 
   for bl in bullets:
     bl.y -= 10
     for b in blocks:
       if bl.colliderect(b):
+
         blocks.remove(b)
         bl.y = -100
         score += 120
@@ -70,7 +90,7 @@ while running:
     screen.blit(rock, b)
   for bl in bullets:
     screen.blit(laser, bl)
-  text = font.render(str(score // 60), True, (255, 255, 255))
+  text = font.render(str(score // 60), False, (255, 255, 255))
   screen.blit(text, (10, 10))
   pygame.display.flip()
 
