@@ -40,6 +40,8 @@ score = 0
 bullets = []
 cooldown = 0
 dead = False
+menu = True
+mode = 1
 enemies = []
 ebullets = []
 hearts = 4
@@ -53,14 +55,36 @@ while running:
     if event.type == pygame.QUIT:
       running = False
 
+  if menu:
+    screen.fill((20, 20, 30))
+    t1 = big.render("DODGE OR DIE", False, (220, 80, 80))
+    t2 = font.render("1  SINGLE PLAYER", False, (255, 255, 255))
+    t3 = font.render("2  TWO PLAYER", False, (255, 255, 255))
+
+    screen.blit(t1, (WIDTH // 2 - t1.get_width() // 2, 200))
+    screen.blit(t2, (WIDTH // 2 - t2.get_width() // 2, 340))
+    screen.blit(t3, (WIDTH // 2 - t3.get_width() // 2, 400))
+
+    pygame.display.flip()
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_1]:
+      mode = 1
+      menu = False
+    if keys[pygame.K_2]:
+      mode = 2
+      menu = False
+    continue
+  
   if dead:
     screen.fill((20, 20, 30))
     t1 = big.render("GAME OVER", False, (220, 80, 80))
-    t2 = font.render("Score: " + str(score // 60) + "   Press R to restart", False, (255, 255, 255))
+    t2 = font.render("Score: " + str(score // 60) + "  R restart   M menu", False, (255, 255, 255))
     screen.blit(t1, (WIDTH // 2 - t1.get_width() // 2, 250))
     screen.blit(t2, (WIDTH // 2 - t2.get_width() // 2, 340))
     pygame.display.flip()
-    if pygame.key.get_pressed()[pygame.K_r]:
+    
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_r] or keys[pygame.K_m]:
       blocks = []
       bullets = []
       enemies = []
@@ -70,6 +94,8 @@ while running:
       score = 0
       player.x = WIDTH // 2 - 25
       dead = False
+      if keys[pygame.K_m]:
+        menu = True
     continue
 
   keys = pygame.key.get_pressed()
