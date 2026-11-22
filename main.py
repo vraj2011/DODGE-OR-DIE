@@ -9,11 +9,15 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
 font = pygame.font.Font("assets/font.ttf", 24)
 big = pygame.font.Font("assets/font.ttf", 56)
+small = pygame.font.Font("assets/font.ttf", 14)
 
-ship = pygame.image.load("assets/ship.png").convert_alpha()
-ship = pygame.transform.scale(ship, (50, 38))
-ship2 = pygame.image.load("assets/ship2.png").convert_alpha()
-ship2 = pygame.transform.scale(ship2, (50, 38))
+def load(f):
+  img = pygame.image.load(f).convert_alpha()
+  return pygame.transform.scale(img, (50, 38))
+
+reds = [load("assets/red1.png"), load("assets/red2.png"), load("assets/red3.png")]
+blues = [load("assets/blue1.png"), load("assets/blue2.png"), load("assets/blue3.png")]
+
 rock = pygame.image.load("assets/rock.png").convert_alpha()
 rock = pygame.transform.scale(rock, (40, 40))
 laser = pygame.image.load("assets/laser.png").convert_alpha()
@@ -39,17 +43,27 @@ for y, row in enumerate(shape):
       pygame.draw.rect(heart, (230, 50, 70), (x * 4, y * 4, 4, 4))
 
 
-def make(x, img, lz, left, right, up, down, fire):
+stats = [
+  {"name": "SCOUT", "speed": 8, "hearts": 3, "cool": 10},
+  {"name": "FIGHTER", "speed": 6, "hearts": 4, "cool": 15},
+  {"name": "TANK", "speed": 4, "hearts": 5, "cool": 20}
+]
+
+
+def make(x, imgs, lz, left, right, up, down, fire, pick):
+  s = stats[pick]
   return {
     "rect": pygame.Rect(x, HEIGHT - 80, 50, 38),
-    "img": img,
+    "img": imgs[pick],
     "laser": lz,
     "left": left,
     "right": right,
     "up": up,
     "down": down,
     "fire": fire,
-    "hearts": 4,
+    "speed": s["speed"],
+    "maxcool": s["cool"],
+    "hearts": s["hearts"],
     "hurt": 0,
     "cool": 0,
     "alive": True,
@@ -59,18 +73,18 @@ def make(x, img, lz, left, right, up, down, fire):
 
 def new_players(mode):
   if mode == 1:
-    return [make(WIDTH // 2 - 25, ship, laser,
+    return [make(WIDTH // 2 - 25, reds, laser,
       [pygame.K_a, pygame.K_LEFT], [pygame.K_d, pygame.K_RIGHT],
       [pygame.K_w, pygame.K_UP], [pygame.K_s, pygame.K_DOWN],
-      [pygame.K_SPACE, pygame.K_LSHIFT, pygame.K_RSHIFT])]
+      [pygame.K_SPACE, pygame.K_LSHIFT, pygame.K_RSHIFT], picks[0])]
 
   return [
-    make(WIDTH // 3 - 25, ship, laser,
+    make(WIDTH // 3 - 25, reds, laser,
       [pygame.K_a], [pygame.K_d], [pygame.K_w], [pygame.K_s],
-      [pygame.K_SPACE]),
-    make(WIDTH * 2 // 3 - 25, ship2, laser2,
+      [pygame.K_SPACE], picks[0]),
+    make(WIDTH * 2 // 3 - 25, blues, laser2,
       [pygame.K_LEFT], [pygame.K_RIGHT], [pygame.K_UP], [pygame.K_DOWN],
-      [pygame.K_RSHIFT])
+      [pygame.K_RSHIFT], picks[1])
   ]
 
 
@@ -81,15 +95,21 @@ score = 0
 dead = False
 menu = True
 mode = 1
+select = False
+turn = 0
+picks = [1, 1]
 players = new_players(mode)
 
 running = True
 while running:
   clock.tick(60)
 
+  tapped = []
   for event in pygame.event.get():
     if event.type == pygame.QUIT:
       running = False
+    if event.type == pygame.KEYDOWN:
+      tapped.append(event.key)
 
   keys = pygame.key.get_pressed()
 
@@ -102,18 +122,56 @@ while running:
     screen.blit(t1, (WIDTH // 2 - t1.get_width() // 2, 200))
     screen.blit(t2, (WIDTH // 2 - t2.get_width() // 2, 340))
     screen.blit(t3, (WIDTH // 2 - t3.get_width() // 2, 400))
+
     pygame.display.flip()
 
     if keys[pygame.K_1]:
       mode = 1
-      players = new_players(mode)
       menu = False
+      select = True
     if keys[pygame.K_2]:
       mode = 2
-      players = new_players(mode)
       menu = False
+      select = True
     continue
 
+  if select:
+    for k in tapped:
+      if k in (pygame.K_a, pygame.K_LEFT):
+        picks[turn] = (picks[turn] - 1) % 3
+      if k in (pygame.K_d, pygame.K_RIGHT):
+        picks[turn] = (picks[turn] + 1) % 3
+      if k in (pygame.K_SPACE, pygame.K_RETURN):
+        turn += 1
+        if turn >= mode:
+          turn = 0
+          players = new_players(mode)
+          select = False
+
+    screen.fill((20, 20, 30))
+    t1 = big.render("PLAYER " + str(turn + 1), False, (220, 80, 80))
+    screen.blit(t1, (WIDTH // 2 - t1.get_width() // 2, 100))
+
+    imgs = reds if turn == 0 else blues
+    for i in range(3):
+      x = 170 + i * 260
+      s = stats[i]
+      screen.blit(pygame.transform.scale(imgs[i], (100, 76)), (x, 270))
+      name = font.render(s["name"], False, (255, 255, 255))
+      screen.blit(name, (x + 50 - name.get_width() // 2, 370))
+      lines = ["SPEED " + str(s["speed"]), "HEARTS " + str(s["hearts"]), "FIRE " + str(60 // s["cool"])]
+      for j, line in enumerate(lines):
+        t = small.render(line, False, (160, 160, 180))
+        screen.blit(t, (x + 50 - t.get_width() // 2, 420 + j * 26))
+      if i == picks[turn]:
+        pygame.draw.rect(screen, (255, 230, 80), (x - 30, 240, 160, 280), 3)
+
+    hint = small.render("A D  CHOOSE     SPACE  CONFIRM", False, (160, 160, 180))
+    screen.blit(hint, (WIDTH // 2 - hint.get_width() // 2, 600))
+    pygame.display.flip()
+    continue
+
+    
   if dead:
     screen.fill((20, 20, 30))
     t1 = big.render("GAME OVER", False, (220, 80, 80))
@@ -140,13 +198,13 @@ while running:
 
     r = p["rect"]
     if any(keys[k] for k in p["left"]):
-      r.x -= 6
+      r.x -= p["speed"]
     if any(keys[k] for k in p["right"]):
-      r.x += 6
+      r.x += p["speed"]
     if any(keys[k] for k in p["up"]):
-      r.y -= 5
+      r.y -= p["speed"]
     if any(keys[k] for k in p["down"]):
-      r.y += 5
+      r.y += p["speed"]
     r.x = max(0, min(WIDTH - 50, r.x))
     r.y = max(HEIGHT // 2, min(HEIGHT - 38, r.y))
 
@@ -154,7 +212,7 @@ while running:
     if any(keys[k] for k in p["fire"]) and p["cool"] <= 0:
       p["bullets"].append(pygame.Rect(r.centerx - 5, r.y, 10, 30))
       shoot.play()
-      p["cool"] = 15
+      p["cool"] = p["maxcool"]
 
   if random.random() < 0.05:
     blocks.append(pygame.Rect(random.randint(0, WIDTH - 40), -40, 40, 40))
