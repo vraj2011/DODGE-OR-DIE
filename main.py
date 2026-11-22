@@ -17,6 +17,15 @@ def load(f):
 
 reds = [load("assets/red1.png"), load("assets/red2.png"), load("assets/red3.png")]
 blues = [load("assets/blue1.png"), load("assets/blue2.png"), load("assets/blue3.png")]
+bgs = [pygame.image.load("assets/bg_" + n + ".png").convert() for n in ["black", "blue", "darkPurple", "purple"]]
+bg_i = 2
+scroll = 0
+
+
+def draw_bg():
+  for x in range(0, WIDTH, 256):
+    for y in range(-256, HEIGHT, 256):
+      screen.blit(bgs[bg_i], (x, y + scroll))
 
 rock = pygame.image.load("assets/rock.png").convert_alpha()
 rock = pygame.transform.scale(rock, (40, 40))
@@ -103,6 +112,7 @@ players = new_players(mode)
 running = True
 while running:
   clock.tick(60)
+  scroll = (scroll + 1) % 256
 
   tapped = []
   for event in pygame.event.get():
@@ -112,13 +122,16 @@ while running:
       tapped.append(event.key)
 
   keys = pygame.key.get_pressed()
-
+  if pygame.K_b in tapped:
+    bg_i = (bg_i + 1) % 4
+  
   if menu:
-    screen.fill((20, 20, 30))
+    draw_bg()
     t1 = big.render("DODGE OR DIE", False, (220, 80, 80))
     t2 = font.render("1  SINGLE PLAYER", False, (255, 255, 255))
     t3 = font.render("2  TWO PLAYER", False, (255, 255, 255))
 
+    draw_bg()
     screen.blit(t1, (WIDTH // 2 - t1.get_width() // 2, 200))
     screen.blit(t2, (WIDTH // 2 - t2.get_width() // 2, 340))
     screen.blit(t3, (WIDTH // 2 - t3.get_width() // 2, 400))
@@ -148,7 +161,7 @@ while running:
           players = new_players(mode)
           select = False
 
-    screen.fill((20, 20, 30))
+    draw_bg()
     t1 = big.render("PLAYER " + str(turn + 1), False, (220, 80, 80))
     screen.blit(t1, (WIDTH // 2 - t1.get_width() // 2, 100))
 
@@ -173,7 +186,7 @@ while running:
 
     
   if dead:
-    screen.fill((20, 20, 30))
+    draw_bg()
     t1 = big.render("GAME OVER", False, (220, 80, 80))
     t2 = font.render("Score: " + str(score // 60) + "  R restart   M menu", False, (255, 255, 255))
 
@@ -292,7 +305,7 @@ while running:
   ebullets = [eb for eb in ebullets if eb.y < HEIGHT]
   score += 1
 
-  screen.fill((20, 20, 30))
+  draw_bg()
   for p in players:
     if p["alive"] and (p["hurt"] <= 0 or p["hurt"] // 6 % 2 == 0):
       screen.blit(p["img"], p["rect"])
