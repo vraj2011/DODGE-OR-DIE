@@ -127,6 +127,8 @@ level = 0
 ltimer = 0
 lvl_done = False
 win = False
+got = 0
+msg = "GAME OVER"
 
 running = True
 while running:
@@ -216,6 +218,7 @@ while running:
     if ltimer > 60 and pygame.K_SPACE in tapped:
       level += 1
       ltimer = 0
+      got = 0
       bg_i = levels[level]["bg"]
       blocks = []
       enemies = []
@@ -231,7 +234,7 @@ while running:
     
   if dead:
     draw_bg()
-    t1 = big.render("YOU WIN" if win else "GAME OVER", False, (255, 230, 80) if win else (220, 80, 80))
+    t1 = big.render(msg, False, (255, 230, 80) if win else (220, 80, 80))
     t2 = font.render("Score: " + str(score // 60) + "  R restart   M menu", False, (255, 255, 255))
 
     screen.blit(t1, (WIDTH // 2 - t1.get_width() // 2, 250))
@@ -247,6 +250,8 @@ while running:
       level = 0
       ltimer = 0
       win = False
+      got = 0
+      msg = "GAME OVER"
       bg_i = levels[0]["bg"]
       score = 0
       players = new_players(mode)
@@ -296,6 +301,8 @@ while running:
           blocks.remove(b)
           bl.y = -100
           score += 120
+          if L["goal"] == "meteor":
+            got += 1
           break
 
       for e in enemies:
@@ -307,6 +314,8 @@ while running:
             boom.play()
             enemies.remove(e)
             score += 300
+            if L["goal"] == "ship":
+              got += 1
           break
 
     p["bullets"] = [bl for bl in p["bullets"] if bl.y > -20]
@@ -377,14 +386,19 @@ while running:
   blocks = [b for b in blocks if b.y < HEIGHT]
   ebullets = [eb for eb in ebullets if eb.y < HEIGHT]
   score += 1
+  
   ltimer += 1
-  if ltimer >= L["time"] * 60 and any(p["alive"] for p in players):
+  if got >= L["need"] and any(p["alive"] for p in players):
     ltimer = 0
     if level == len(levels) - 1:
       win = True
+      msg = "YOU WIN"
       dead = True
     else:
       lvl_done = True
+  elif ltimer >= L["time"] * 60:
+    msg = "TIME UP"
+    dead = True
 
   draw_bg()
   for p in players:
@@ -413,7 +427,9 @@ while running:
 
   lt = font.render("LEVEL " + str(level + 1) + "   " + str(L["time"] - ltimer // 60), False, (255, 255, 255))
   screen.blit(lt, (WIDTH // 2 - lt.get_width() // 2, 10))
-  
+  gt = small.render(("METEORS " if L["goal"] == "meteor" else "SHIPS ") + str(min(got, L["need"])) + "/" + str(L["need"]), False, (255, 230, 80))
+  screen.blit(gt, (WIDTH // 2 - gt.get_width() // 2, 44))
+
   text = font.render(str(score // 60), False, (255, 255, 255))
   screen.blit(text, (10, 10))
   pygame.display.flip()
