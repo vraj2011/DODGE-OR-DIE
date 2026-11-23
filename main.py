@@ -1,6 +1,6 @@
 import pygame
 import random
-from levels import levels
+from levels import levels, draw_select
 
 pygame.init()
 pygame.display.set_caption("DODGE OR DIE")
@@ -11,6 +11,7 @@ clock = pygame.time.Clock()
 font = pygame.font.Font("assets/font.ttf", 24)
 big = pygame.font.Font("assets/font.ttf", 56)
 small = pygame.font.Font("assets/font.ttf", 14)
+tiny = pygame.font.Font("assets/font.ttf", 12)
 
 def load(f):
   img = pygame.image.load(f).convert_alpha()
@@ -129,6 +130,9 @@ lvl_done = False
 win = False
 got = 0
 msg = "GAME OVER"
+lsel = False
+cur = 0
+unlocked = 1
 
 running = True
 while running:
@@ -177,8 +181,8 @@ while running:
         turn += 1
         if turn >= mode:
           turn = 0
-          players = new_players(mode)
           select = False
+          lsel = True
 
     draw_bg()
     t1 = big.render("PLAYER " + str(turn + 1), False, (220, 80, 80))
@@ -200,6 +204,37 @@ while running:
 
     hint = small.render("A D  CHOOSE     SPACE  CONFIRM", False, (160, 160, 180))
     screen.blit(hint, (WIDTH // 2 - hint.get_width() // 2, 600))
+    pygame.display.flip()
+    continue
+
+  if lsel:
+    for k in tapped:
+      if k in (pygame.K_a, pygame.K_LEFT):
+        cur = (cur - 1) % len(levels)
+      if k in (pygame.K_d, pygame.K_RIGHT):
+        cur = (cur + 1) % len(levels)
+      if k == pygame.K_m:
+        lsel = False
+        menu = True
+      if k in (pygame.K_SPACE, pygame.K_RETURN) and cur < unlocked:
+        level = cur
+        bg_i = levels[level]["bg"]
+        players = new_players(mode)
+        blocks = []
+        enemies = []
+        ebullets = []
+        sparks = []
+        over = 0
+        ltimer = 0
+        got = 0
+        score = 0
+        win = False
+        msg = "GAME OVER"
+        dead = False
+        lsel = False
+
+    draw_bg()
+    draw_select(screen, big, tiny, small, cur, unlocked, WIDTH)
     pygame.display.flip()
     continue
 
@@ -235,29 +270,31 @@ while running:
   if dead:
     draw_bg()
     t1 = big.render(msg, False, (255, 230, 80) if win else (220, 80, 80))
-    t2 = font.render("Score: " + str(score // 60) + "  R restart   M menu", False, (255, 255, 255))
+    t2 = font.render("Score: " + str(score // 60), False, (255, 255, 255))
+    t3 = small.render("R RETRY    L LEVELS    M MENU", False, (160, 160, 180))
 
     screen.blit(t1, (WIDTH // 2 - t1.get_width() // 2, 250))
     screen.blit(t2, (WIDTH // 2 - t2.get_width() // 2, 340))
+    screen.blit(t3, (WIDTH // 2 - t3.get_width() // 2, 410))
     pygame.display.flip()
 
-    if keys[pygame.K_r] or keys[pygame.K_m]:
+    if keys[pygame.K_r] or keys[pygame.K_m] or keys[pygame.K_l]:
       blocks = []
       enemies = []
       ebullets = []
       sparks = []
       over = 0
-      level = 0
       ltimer = 0
       win = False
       got = 0
       msg = "GAME OVER"
-      bg_i = levels[0]["bg"]
       score = 0
       players = new_players(mode)
       dead = False
       if keys[pygame.K_m]:
         menu = True
+      if keys[pygame.K_l]:
+        lsel = True
     continue
 
   for p in players:
@@ -389,6 +426,7 @@ while running:
   
   ltimer += 1
   if got >= L["need"] and any(p["alive"] for p in players):
+    unlocked = max(unlocked, min(level + 2, len(levels)))
     ltimer = 0
     if level == len(levels) - 1:
       win = True
