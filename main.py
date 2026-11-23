@@ -43,6 +43,19 @@ lose = pygame.mixer.Sound("assets/lose.ogg")
 eshoot = pygame.mixer.Sound("assets/eshoot.ogg")
 eshoot.set_volume(0.4)
 hit = pygame.mixer.Sound("assets/hit.ogg")
+pop = pygame.mixer.Sound("assets/boom_small.ogg")
+pop.set_volume(0.3)
+boom = pygame.mixer.Sound("assets/boom_big.ogg")
+
+COL_S = [(255, 230, 80), (255, 255, 255)]
+COL_B = [(255, 230, 80), (255, 150, 40), (230, 60, 40), (255, 255, 255)]
+sparks = []
+
+
+def blast(x, y, n, size, colors):
+  for i in range(n):
+    sparks.append({"x": x, "y": y, "vx": random.uniform(-4, 4), "vy": random.uniform(-4, 4), "life": random.randint(15, 35), "c": random.choice(colors), "s": size})
+
 
 heart = pygame.Surface((28, 24), pygame.SRCALPHA)
 shape = [" XX XX ", "XXXXXXX", "XXXXXXX", " XXXXX ", "  XXX  ", "   X   "]
@@ -108,6 +121,7 @@ select = False
 turn = 0
 picks = [1, 1]
 players = new_players(mode)
+over = 0
 
 running = True
 while running:
@@ -198,6 +212,8 @@ while running:
       blocks = []
       enemies = []
       ebullets = []
+      sparks = []
+      over = 0
       score = 0
       players = new_players(mode)
       dead = False
@@ -241,6 +257,7 @@ while running:
       bl.y -= 10
       for b in blocks:
         if bl.colliderect(b):
+          blast(b.centerx, b.centery, 8, 4, COL_S)
           blocks.remove(b)
           bl.y = -100
           score += 120
@@ -251,6 +268,8 @@ while running:
           e["hp"] -= 1
           bl.y = -100
           if e["hp"] <= 0:
+            blast(e["rect"].centerx, e["rect"].centery, 30, 7, COL_B)
+            boom.play()
             enemies.remove(e)
             score += 300
           break
@@ -275,6 +294,16 @@ while running:
     eb.y += 7
 
   for p in players:
+    for bl in p["bullets"]:
+      for eb in ebullets:
+        if bl.colliderect(eb):
+          blast(bl.centerx, bl.centery, 8, 4, COL_S)
+          pop.play()
+          bl.y = -100
+          eb.y = HEIGHT + 100
+          break
+
+  for p in players:
     if not p["alive"]:
       continue
 
@@ -296,10 +325,19 @@ while running:
 
     if p["hearts"] <= 0:
       p["alive"] = False
+      blast(p["rect"].centerx, p["rect"].centery, 30, 7, COL_B)
       lose.play()
 
   if not any(p["alive"] for p in players):
-    dead = True
+    over += 1
+    if over > 70:
+      dead = True
+
+  for sp in sparks:
+    sp["x"] += sp["vx"]
+    sp["y"] += sp["vy"]
+    sp["life"] -= 1
+  sparks = [sp for sp in sparks if sp["life"] > 0]
 
   blocks = [b for b in blocks if b.y < HEIGHT]
   ebullets = [eb for eb in ebullets if eb.y < HEIGHT]
@@ -318,13 +356,17 @@ while running:
   for eb in ebullets:
     screen.blit(elaser, eb)
 
+  for sp in sparks:
+    s = max(2, sp["s"] * sp["life"] // 35)
+    pygame.draw.rect(screen, sp["c"], (sp["x"], sp["y"], s, s))
+
   for n, p in enumerate(players):
     for i in range(p["hearts"]):
       if n == 0:
+
         screen.blit(heart, (10 + i * 36, 50))
       else:
         screen.blit(heart, (WIDTH - 40 - i * 36, 10))
-
   text = font.render(str(score // 60), False, (255, 255, 255))
   screen.blit(text, (10, 10))
   pygame.display.flip()
