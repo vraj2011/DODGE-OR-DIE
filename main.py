@@ -1,5 +1,6 @@
 import pygame
 import random
+from levels import levels
 
 pygame.init()
 pygame.display.set_caption("DODGE OR DIE")
@@ -122,6 +123,10 @@ turn = 0
 picks = [1, 1]
 players = new_players(mode)
 over = 0
+level = 0
+ltimer = 0
+lvl_done = False
+win = False
 
 running = True
 while running:
@@ -136,9 +141,7 @@ while running:
       tapped.append(event.key)
 
   keys = pygame.key.get_pressed()
-  if pygame.K_b in tapped:
-    bg_i = (bg_i + 1) % 4
-  
+
   if menu:
     draw_bg()
     t1 = big.render("DODGE OR DIE", False, (220, 80, 80))
@@ -198,10 +201,37 @@ while running:
     pygame.display.flip()
     continue
 
+  if lvl_done:
+    ltimer += 1
+    draw_bg()
+    t1 = big.render("LEVEL " + str(level + 1) + " DONE", False, (255, 230, 80))
+    t2 = font.render("Score: " + str(score // 60) + "   SPACE  next level", False, (255, 255, 255))
+    t3 = small.render("NEXT  " + levels[level + 1]["name"], False, (160, 160, 180))
+
+    screen.blit(t1, (WIDTH // 2 - t1.get_width() // 2, 230))
+    screen.blit(t2, (WIDTH // 2 - t2.get_width() // 2, 330))
+    screen.blit(t3, (WIDTH // 2 - t3.get_width() // 2, 400))
+    pygame.display.flip()
+
+    if ltimer > 60 and pygame.K_SPACE in tapped:
+      level += 1
+      ltimer = 0
+      bg_i = levels[level]["bg"]
+      blocks = []
+      enemies = []
+      ebullets = []
+      sparks = []
+      for p in players:
+        p["bullets"] = []
+        if not p["alive"]:
+          p["alive"] = True
+          p["hearts"] = 2
+      lvl_done = False
+    continue
     
   if dead:
     draw_bg()
-    t1 = big.render("GAME OVER", False, (220, 80, 80))
+    t1 = big.render("YOU WIN" if win else "GAME OVER", False, (255, 230, 80) if win else (220, 80, 80))
     t2 = font.render("Score: " + str(score // 60) + "  R restart   M menu", False, (255, 255, 255))
 
     screen.blit(t1, (WIDTH // 2 - t1.get_width() // 2, 250))
@@ -214,6 +244,10 @@ while running:
       ebullets = []
       sparks = []
       over = 0
+      level = 0
+      ltimer = 0
+      win = False
+      bg_i = levels[0]["bg"]
       score = 0
       players = new_players(mode)
       dead = False
@@ -243,14 +277,15 @@ while running:
       shoot.play()
       p["cool"] = p["maxcool"]
 
-  if random.random() < 0.05:
+  L = levels[level]
+  if random.random() < L["rocks"]:
     blocks.append(pygame.Rect(random.randint(0, WIDTH - 40), -40, 40, 40))
 
-  if random.random() < 0.004 and len(enemies) < 2:
+  if random.random() < 0.004 and len(enemies) < L["enemies"]:
     enemies.append({"rect": pygame.Rect(random.randint(0, WIDTH - 60), -50, 60, 50), "hp": 2, "cool": 60, "dx": 3})
 
   for b in blocks:
-    b.y += 5
+    b.y += L["speed"]
 
   for p in players:
     for bl in p["bullets"]:
@@ -288,7 +323,7 @@ while running:
     if e["cool"] <= 0:
       ebullets.append(pygame.Rect(r.centerx - 5, r.bottom, 10, 30))
       eshoot.play()
-      e["cool"] = 90
+      e["cool"] = L["ecool"]
 
   for eb in ebullets:
     eb.y += 7
@@ -342,6 +377,14 @@ while running:
   blocks = [b for b in blocks if b.y < HEIGHT]
   ebullets = [eb for eb in ebullets if eb.y < HEIGHT]
   score += 1
+  ltimer += 1
+  if ltimer >= L["time"] * 60 and any(p["alive"] for p in players):
+    ltimer = 0
+    if level == len(levels) - 1:
+      win = True
+      dead = True
+    else:
+      lvl_done = True
 
   draw_bg()
   for p in players:
@@ -367,6 +410,10 @@ while running:
         screen.blit(heart, (10 + i * 36, 50))
       else:
         screen.blit(heart, (WIDTH - 40 - i * 36, 10))
+
+  lt = font.render("LEVEL " + str(level + 1) + "   " + str(L["time"] - ltimer // 60), False, (255, 255, 255))
+  screen.blit(lt, (WIDTH // 2 - lt.get_width() // 2, 10))
+  
   text = font.render(str(score // 60), False, (255, 255, 255))
   screen.blit(text, (10, 10))
   pygame.display.flip()
