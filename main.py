@@ -1,6 +1,10 @@
+import sys, os
+if getattr(sys, 'frozen', False):
+    os.chdir(sys._MEIPASS)   
+
 import pygame
 import random
-from levels import levels, draw_select
+from levels import levels, draw_select, get_stars, draw_stars
 
 pygame.init()
 pygame.display.set_caption("DODGE OR DIE")
@@ -133,6 +137,9 @@ msg = "GAME OVER"
 lsel = False
 cur = 0
 unlocked = 1
+best = [0] * len(levels)
+stars = 0
+lost = 0
 
 running = True
 while running:
@@ -227,6 +234,7 @@ while running:
         over = 0
         ltimer = 0
         got = 0
+        lost = 0
         score = 0
         win = False
         msg = "GAME OVER"
@@ -234,7 +242,7 @@ while running:
         lsel = False
 
     draw_bg()
-    draw_select(screen, big, tiny, small, cur, unlocked, WIDTH)
+    draw_select(screen, big, tiny, small, cur, unlocked, best, WIDTH)
     pygame.display.flip()
     continue
 
@@ -248,12 +256,14 @@ while running:
     screen.blit(t1, (WIDTH // 2 - t1.get_width() // 2, 230))
     screen.blit(t2, (WIDTH // 2 - t2.get_width() // 2, 330))
     screen.blit(t3, (WIDTH // 2 - t3.get_width() // 2, 400))
+    draw_stars(screen, WIDTH // 2 - 92, 450, stars, 8)
     pygame.display.flip()
 
     if ltimer > 60 and pygame.K_SPACE in tapped:
       level += 1
       ltimer = 0
       got = 0
+      lost = 0
       bg_i = levels[level]["bg"]
       blocks = []
       enemies = []
@@ -276,6 +286,8 @@ while running:
     screen.blit(t1, (WIDTH // 2 - t1.get_width() // 2, 250))
     screen.blit(t2, (WIDTH // 2 - t2.get_width() // 2, 340))
     screen.blit(t3, (WIDTH // 2 - t3.get_width() // 2, 410))
+    if win:
+      draw_stars(screen, WIDTH // 2 - 92, 460, stars, 8)
     pygame.display.flip()
 
     if keys[pygame.K_r] or keys[pygame.K_m] or keys[pygame.K_l]:
@@ -287,6 +299,7 @@ while running:
       ltimer = 0
       win = False
       got = 0
+      lost = 0
       msg = "GAME OVER"
       score = 0
       players = new_players(mode)
@@ -400,6 +413,7 @@ while running:
 
     if damage > 0 and p["hurt"] <= 0:
       p["hearts"] -= damage
+      lost += damage
       p["hurt"] = 90
       hit.play()
     p["hurt"] -= 1
@@ -427,6 +441,8 @@ while running:
   ltimer += 1
   if got >= L["need"] and any(p["alive"] for p in players):
     unlocked = max(unlocked, min(level + 2, len(levels)))
+    stars = get_stars(L, L["time"] - ltimer // 60, lost)
+    best[level] = max(best[level], stars)
     ltimer = 0
     if level == len(levels) - 1:
       win = True

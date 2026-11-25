@@ -9,7 +9,28 @@ levels = [
 ]
 
 
-def draw_select(screen, big, tiny, small, cur, unlocked, width):
+star = ["   X   ", "  XXX  ", "XXXXXXX", " XXXXX ", "  XXX  ", " XX XX ", " X   X "]
+
+
+def get_stars(lv, left, lost):
+  n = 1
+  if left >= lv["time"] // 2:
+    n += 1
+  if lost <= 2:
+    n += 1
+  return n
+
+
+def draw_stars(screen, x, y, n, s):
+  for i in range(3):
+    col = (255, 230, 80) if i < n else (60, 55, 80)
+    for r, row in enumerate(star):
+      for c, ch in enumerate(row):
+        if ch == "X":
+          pygame.draw.rect(screen, col, (x + i * 8 * s + c * s, y + r * s, s, s))
+
+
+def draw_select(screen, big, tiny, small, cur, unlocked, best, width):
   t1 = big.render("SELECT LEVEL", False, (220, 80, 80))
   screen.blit(t1, (width // 2 - t1.get_width() // 2, 100))
 
@@ -33,6 +54,7 @@ def draw_select(screen, big, tiny, small, cur, unlocked, width):
       tm = tiny.render(str(lv["time"]) + " SEC", False, (160, 160, 180))
       screen.blit(goal, (x + 85 - goal.get_width() // 2, 400))
       screen.blit(tm, (x + 85 - tm.get_width() // 2, 425))
+      draw_stars(screen, x + 85 - 34, 442, best[i], 3)
     else:
       lk = tiny.render("LOCKED", False, (90, 90, 110))
       screen.blit(lk, (x + 85 - lk.get_width() // 2, 410))
