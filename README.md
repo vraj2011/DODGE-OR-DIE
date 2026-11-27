@@ -3,7 +3,7 @@
 - A fast arcade space shooter for one or two players, built in Python with pygame.
 - Dodge the meteors, shoot down enemy ships, and survive five levels, each with its own goal and deadline.
 
-- This is my first game, made for Hack Club.
+- This is my first PYTHON game, made for Hack Club.
 
 # Screenshots
 <img width="1917" height="1198" alt="Screenshot 2026-11-25 211346" src="https://github.com/user-attachments/assets/fed9b561-261e-4862-a74e-88dc06848229" />
@@ -13,7 +13,7 @@
 
 
 # Features
--Single player and local two-player on one keyboard
+- Single player and local two-player on one keyboard
 - 5 levels, each with a goal (destroy a number of meteors or enemy ships) and a time limit
 - 3 ships with different stats: Scout (fast, fires quickly, 3 hearts), Fighter (balanced, 4 hearts) and Tank (slow, 5 hearts)
 - Enemy ships that shoot back, and bullets you can shoot out of the air
@@ -28,10 +28,10 @@
 
 - NOTE: You need Python 3 and pygame-ce.
 
-git clone https://github.com/vraj2011/DODGE-OR-DIE/
-cd DODGE-OR-DIE
-pip install pygame-ce
-python main.py
+- git clone https://github.com/vraj2011/DODGE-OR-DIE/
+- cd DODGE-OR-DIE
+- pip install pygame-ce
+- python main.py
 
 - On Windows you can also use py main.py.
 
@@ -48,14 +48,16 @@ python main.py
 
 # How to play
 
-- Each level has a goal shown at the top of the screen, such as METEORS 4/10, and a countdown.
+-  Each level has a goal shown at the top of the screen, such as METEORS 4/10, and a countdown.
 -  Reach the goal before time runs out to win the level.
 -   A meteor hit costs 1 heart and an enemy bullet costs 2.
 -    In two-player, both ships share the same goal, and if you lose all your hearts the other player keeps going.
 
 # Built with
-Python and pygame-ce
-Compiled to an .exe 
+- Python and pygame-ce
+- Compiled to an .exe
+
 # Credits
-Art and sound effects: Space Shooter Redux by Kenney, released under CC0
-Other sounds: from kenney.nl
+- Art and sound effects: Space Shooter Redux by Kenney, released under CC0
+- Other sounds: from kenney.nl
+- Honestly kenney.nl is the best asset provider ever and this is my 1st game with pre made assets!
